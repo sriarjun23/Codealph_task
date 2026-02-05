@@ -1,0 +1,49 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+print("1. Loading and Cleaning Data...")
+try:
+    df = pd.read_csv('unemployment_data.csv')
+except FileNotFoundError:
+    print("Error: 'unemployment_data.csv' not found. Please check the file name.")
+    exit()
+df.columns = df.columns.str.strip()
+df['Date'] = pd.to_datetime(df['Date'], dayfirst=True)
+df['Month'] = df['Date'].dt.month_name()
+df['Year'] = df['Date'].dt.year
+print("Data loaded successfully!")
+print(f"Columns found: {list(df.columns)}")
+print("-" * 30)
+print("2. Generating General Trend Plot...")
+avg_unemployment = df.groupby('Date')['Estimated Unemployment Rate (%)'].mean().reset_index()
+plt.figure(figsize=(14, 6))
+sns.lineplot(x='Date', y='Estimated Unemployment Rate (%)', data=avg_unemployment, marker='o', color='red')
+plt.title('Average Unemployment Rate Over Time')
+plt.xlabel('Date')
+plt.ylabel('Unemployment Rate (%)')
+plt.grid(True)
+plt.show()
+print("3. Analyzing COVID-19 Impact...")
+start_date = '2020-03-01'
+end_date = '2020-06-30'
+mask = (df['Date'] >= start_date) & (df['Date'] <= end_date)
+covid_period = df.loc[mask]
+non_covid_period = df.loc[~mask]
+avg_covid = covid_period['Estimated Unemployment Rate (%)'].mean()
+avg_non_covid = non_covid_period['Estimated Unemployment Rate (%)'].mean()
+print(f"Average Rate DURING Covid (Mar-Jun 2020): {avg_covid:.2f}%")
+print(f"Average Rate OUTSIDE Covid period: {avg_non_covid:.2f}%")
+plt.figure(figsize=(8, 5))
+plt.bar(['Non-COVID Period', 'COVID Peak'], [avg_non_covid, avg_covid], color=['green', 'orange'])
+plt.title('Impact of COVID-19 on Unemployment Rate')
+plt.ylabel('Average Unemployment Rate (%)')
+plt.show()
+print("4. Analyzing Monthly Patterns...")
+month_order = ['January', 'February', 'March', 'April', 'May', 'June', 
+               'July', 'August', 'September', 'October', 'November', 'December']
+plt.figure(figsize=(14, 7))
+sns.boxplot(x='Month', y='Estimated Unemployment Rate (%)', data=df, order=month_order, palette='Set2')
+plt.title('Monthly Unemployment Distribution (Seasonality Check)')
+plt.xticks(rotation=45)
+plt.show()
+print("Analysis Complete.")
